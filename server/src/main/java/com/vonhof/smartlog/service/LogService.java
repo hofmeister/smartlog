@@ -1,11 +1,11 @@
 package com.vonhof.smartlog.service;
 
 
+import com.vonhof.babelshark.BabelSharkInstance;
 import com.vonhof.smartlog.dto.LogEntryDTO;
 import com.vonhof.smartlog.dto.LogQueryDTO;
 import com.vonhof.smartlog.dto.PagedList;
 import com.vonhof.webi.bean.AfterInject;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
@@ -34,7 +34,8 @@ import static org.elasticsearch.index.query.QueryBuilders.prefixQuery;
 public class LogService implements AfterInject {
     private static final Logger log = Logger.getLogger(LogService.class.getName());
 
-    private ObjectMapper om = new ObjectMapper();
+    @Inject
+    BabelSharkInstance bs;
     
     @Inject
     private Client es;
@@ -42,7 +43,7 @@ public class LogService implements AfterInject {
 
     public void save(LogEntryDTO entry) throws IOException, ExecutionException, InterruptedException {
         es.prepareIndex("logs","log")
-                .setSource(om.writeValueAsString(entry))
+                .setSource(bs.writeToString(entry, "json"))
                 .execute().actionGet();
     }
 
@@ -85,7 +86,7 @@ public class LogService implements AfterInject {
 
         for(SearchHit hit : result.getHits().hits()) {
             try {
-                LogEntryDTO entry = om.readValue(hit.getSourceAsString(), LogEntryDTO.class);
+                LogEntryDTO entry = bs.read(hit.getSourceAsString(), "json", LogEntryDTO.class);
                 out.getRows().add(entry);
             } catch (IOException e) {
                 log.log(Level.WARNING,"Failed to deserialize log entry", e);

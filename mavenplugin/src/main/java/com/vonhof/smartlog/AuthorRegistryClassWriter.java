@@ -6,7 +6,7 @@ import org.apache.commons.lang.StringUtils;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class AuthorRegistryClassWriter {
+public class AuthorRegistryClassWriter {
 
     private String className = "SmartLogAuthorRegistry__";
     private String packageName = "com.vonhof.smartlog";
@@ -17,6 +17,15 @@ public final class AuthorRegistryClassWriter {
     public AuthorRegistryClassWriter() {
         startClass();
     }
+
+    public void add(AuthorMap authorMap) {
+        sb.append("authors.put(\"").append(authorMap.getClassName()).append("\",\n")
+                .append("new String[] {\n\t\"")
+                .append(StringUtils.join(authorMap.getAuthors(), "\",\n\t\""))
+                .append("\"\n}")
+                .append(");\n");
+    }
+
 
     private void startClass() {
         sb.append("package ").append(packageName).append(";");
@@ -44,15 +53,6 @@ public final class AuthorRegistryClassWriter {
     private void addImport(String className) {
         sb.append("import ").append(className).append(";\n");
     }
-
-    public void add(AuthorMap authorMap) {
-        sb.append("authors.put(\"").append(authorMap.getClassName()).append("\",\n")
-                .append("new String[] {\n\t\"")
-                    .append(StringUtils.join(authorMap.getAuthors(), "\",\n\t\""))
-                .append("\"\n}")
-                .append(");\n");
-    }
-
     @Override
     public String toString() {
         endClass();
