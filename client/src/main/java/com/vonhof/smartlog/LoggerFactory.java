@@ -1,0 +1,115 @@
+package com.vonhof.smartlog;
+
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class LoggerFactory {
+
+    private static volatile Level defaultLevel = Level.INFO;
+
+    private static Map<String,Level> prefixLevels = new ConcurrentHashMap<String, Level>();
+
+    private static Map<String,Level> tagLevels = new ConcurrentHashMap<String, Level>();
+
+    private static LoggerStore store;
+
+    private static List<LoggerSubscriber> subscribers = new ArrayList<LoggerSubscriber>();
+
+    private static StackTraceElement[] getTrace() {
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+
+        List<StackTraceElement> out = new LinkedList<StackTraceElement>();
+
+        for(StackTraceElement elm : stackTrace) {
+            if (elm.getClassName().startsWith("com.vonhof.smartlog.")) {
+                continue;
+            }
+
+            out.add(elm);
+        }
+        return out.toArray(new StackTraceElement[0]);
+    }
+
+    static void write(Level lvl, Class clz, String[] tags, String msg, Object ... args) {
+        Object[] formatArgs = args;
+        Throwable ex = null;
+
+        if (args.length > 0 && args[args.length-1] instanceof Throwable) {
+            formatArgs = Arrays.copyOf(args,args.length-1);
+            ex = (Throwable) args[args.length-1];
+        }
+
+
+        LogEntry logEntry = null;
+        if (ex != null) {
+            logEntry = new LogEntry(lvl, clz, tags, msg, formatArgs, ex);
+        } else {
+            logEntry = new LogEntry(lvl, clz, tags, msg, formatArgs, getTrace());
+        }
+
+        if (store != null) {
+            store.write(logEntry);
+        }
+
+        if (!subscribers.isEmpty()) {
+            String formattedMsg = null;
+            if (formatArgs.length > 0 && msg != null) {
+                formattedMsg = String.format(msg, formatArgs);
+            }
+
+            for(LoggerSubscriber subscriber : subscribers) {
+                subscriber.logged(logEntry);
+            }
+        }
+    }
+
+    public static void setStore(LoggerStore store) {
+        LoggerFactory.store = store;
+    }
+
+    public static void setLogLevel(Level lvl) {
+        defaultLevel = lvl;
+    }
+
+    public static void setLogLevelByPrefix(String prefix, Level lvl) {
+        prefixLevels.put(prefix, lvl);
+    }
+
+    public static void setLogLevelByTag(String tag, Level lvl) {
+        tagLevels.put(tag, lvl);
+    }
+
+    public static Level getLogLevel(Class clz, String ... tags) {
+        for(String tag : tags) {
+            if (tagLevels.containsKey(tag)) {
+                return tagLevels.get(tag);
+            }
+        }
+
+        String parts[] = clz.getName().split("\\.");
+        Level lvl = defaultLevel;
+
+        String prefix = "";
+        for(String part : parts) {
+            prefix += part;
+            if (prefixLevels.containsKey(prefix)) {
+                lvl = prefixLevels.get(prefix);
+            }
+
+            prefix += ".";
+        }
+
+        return lvl;
+    }
+
+    public static Logger getLogger(Class clz, String ... tags) {
+        return new Logger(clz,tags);
+    }
+
+
+}
