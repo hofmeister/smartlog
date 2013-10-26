@@ -1,7 +1,6 @@
-package com.vonhof.smartlog.impl;
+package com.vonhof.smartlog.store;
 
 import com.vonhof.smartlog.LogEntry;
-import com.vonhof.smartlog.LoggerStore;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;

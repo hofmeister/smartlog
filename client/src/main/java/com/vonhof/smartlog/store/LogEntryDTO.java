@@ -1,4 +1,4 @@
-package com.vonhof.smartlog.impl;
+package com.vonhof.smartlog.store;
 
 public class LogEntryDTO {
     private String message;

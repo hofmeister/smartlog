@@ -1,4 +1,4 @@
-package com.vonhof.smartlog.impl;
+package com.vonhof.smartlog.subscriber;
 
 import com.vonhof.smartlog.LogEntry;
 

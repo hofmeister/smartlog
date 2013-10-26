@@ -3,8 +3,8 @@ package com.vonhof.smartlogdemo.demo;
 
 import com.vonhof.smartlog.Logger;
 import com.vonhof.smartlog.LoggerFactory;
-import com.vonhof.smartlog.impl.JavaLoggingSubscriber;
-import com.vonhof.smartlog.impl.SmartLogServerStore;
+import com.vonhof.smartlog.subscriber.JavaLoggingSubscriber;
+import com.vonhof.smartlog.store.SmartLogServerStore;
 
 public class Main {
     private static final Logger log = LoggerFactory.getLogger(Main.class,"demo","test");

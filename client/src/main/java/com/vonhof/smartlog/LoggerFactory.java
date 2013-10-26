@@ -1,6 +1,8 @@
 package com.vonhof.smartlog;
 
 
+import com.vonhof.smartlog.store.LoggerStore;
+
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
