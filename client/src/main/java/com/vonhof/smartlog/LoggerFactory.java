@@ -26,13 +26,18 @@ public class LoggerFactory {
 
         List<StackTraceElement> out = new LinkedList<StackTraceElement>();
 
+        boolean first = true;
+
         for(StackTraceElement elm : stackTrace) {
-            if (elm.getClassName().startsWith("com.vonhof.smartlog.")) {
+            if (first || elm.getClassName().startsWith("com.vonhof.smartlog.")) {
+                first = false;
                 continue;
             }
 
             out.add(elm);
         }
+
+
         return out.toArray(new StackTraceElement[0]);
     }
 
@@ -81,6 +86,10 @@ public class LoggerFactory {
         } catch (Exception e) {
             return "";
         }
+    }
+
+    public static void addSubscriber(LoggerSubscriber subscriber) {
+        subscribers.add(subscriber);
     }
 
     public static void setStore(LoggerStore store) {

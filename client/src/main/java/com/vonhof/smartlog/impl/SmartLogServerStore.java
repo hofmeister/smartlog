@@ -14,14 +14,20 @@ public class SmartLogServerStore implements LoggerStore {
     private static final Logger log = Logger.getLogger(SmartLogServerStore.class.getName());
 
     private ObjectMapper om = new ObjectMapper();
+    private volatile boolean connectionFailed = false;
 
     @Override
     public void write(String author, LogEntry logEntry) {
+        if (connectionFailed) {
+            return;
+        }
+
         LogEntryDTO dto = toDTO(author, logEntry);
 
         try {
             send(dto);
         } catch (IOException e) {
+            connectionFailed = true;
             log.log(Level.WARNING, "Failed to send smart log entry", e );
         }
 
