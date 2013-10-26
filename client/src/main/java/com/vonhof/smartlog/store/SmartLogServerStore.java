@@ -38,9 +38,11 @@ public class SmartLogServerStore implements LoggerStore {
         HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
         httpCon.setDoOutput(true);
         httpCon.setRequestMethod("PUT");
+        httpCon.setRequestProperty("Content-Type","application/json");
         om.writeValue(httpCon.getOutputStream(), entry);
         httpCon.getOutputStream().flush();
         httpCon.getOutputStream().close();
+        httpCon.getInputStream();
         httpCon.disconnect();
     }
 
