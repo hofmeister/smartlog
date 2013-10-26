@@ -1,6 +1,7 @@
 package com.vonhof.smartlog;
 
 
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -31,12 +32,41 @@ public class SmartLogProcessorMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.build.directory}/generated-sources", required = true, readonly = true)
     private File targetDir;
 
-    private AuthorResolver authorResolver;
+    private AuthorRegistryClassWriter classWriter = new AuthorRegistryClassWriter();
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        List<String> compileSourceRoots = project.getCompileSourceRoots();
+        final List<String> compileSourceRoots = project.getCompileSourceRoots();
 
+        final AuthorResolver authorResolver = getAuthorResolver();
+
+        if (!targetDir.exists()) {
+            targetDir.mkdir();
+        }
+
+        for(String sourceRoot : compileSourceRoots) {
+            try {
+                resolveDir(new File(sourceRoot), authorResolver);
+            } catch (Exception e) {
+                throw new MojoExecutionException("Failed to scan directory",e);
+            }
+        }
+
+        writeRegistryClass();
+    }
+
+    private void writeRegistryClass() throws MojoExecutionException {
+        String classDef = classWriter.toString();
+
+        File file = new File(targetDir + "/" + classWriter.toFileName());
+        try {
+            FileUtils.write(file, classDef);
+        } catch (IOException e) {
+            throw new MojoExecutionException("Could not write to file: " + file,e);
+        }
+    }
+
+    private AuthorResolver getAuthorResolver() throws MojoExecutionException {
         Repository repository;
         try {
             repository = new FileRepositoryBuilder()
@@ -52,31 +82,24 @@ public class SmartLogProcessorMojo extends AbstractMojo {
             throw new MojoExecutionException("Git root does not exist: " + repository.getDirectory());
         }
 
-        authorResolver = new GitAuthorResolver(repository);
-
-
-        if (!targetDir.exists()) {
-            targetDir.mkdir();
-        }
-
-        for(String sourceRoot : compileSourceRoots) {
-            try {
-                searchDir(new File(sourceRoot));
-            } catch (Exception e) {
-                throw new MojoExecutionException("Failed to scan directory",e);
-            }
-        }
+        return new GitAuthorResolver(repository);
     }
 
-    private void searchDir(File dir) throws Exception {
+    private void resolveDir(File rootDir, AuthorResolver authorResolver) throws Exception {
+        resolveDir(rootDir, rootDir, authorResolver);
+    }
 
-        File baseDir = project.getFile().getParentFile();
+    private void resolveDir(File rootDir, File dir,  AuthorResolver authorResolver) throws Exception {
+        String basePath = rootDir.getAbsolutePath();
 
         for(File file : dir.listFiles()) {
             if (file.isDirectory()) {
-                searchDir(file);
+                resolveDir(rootDir, file, authorResolver);
             } else {
-                authorResolver.resolveAuthor(file);
+                String relPath = file.getAbsolutePath().substring(basePath.length()+1);
+                AuthorMap authorMap = authorResolver.resolveAuthor(file,relPath);
+                getLog().info(String.format("Resolved authors for file: " + relPath));
+                classWriter.add(authorMap);
             }
         }
     }

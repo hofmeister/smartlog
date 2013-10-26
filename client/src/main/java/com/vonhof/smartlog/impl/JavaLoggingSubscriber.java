@@ -8,7 +8,7 @@ import java.util.logging.Logger;
 
 public class JavaLoggingSubscriber implements LoggerSubscriber {
     @Override
-    public void logged(LogEntry logEntry) {
+    public void logged(String author, LogEntry logEntry) {
         Logger logger = Logger.getLogger(logEntry.getClz().getName());
 
         Level loggingLevel = null;

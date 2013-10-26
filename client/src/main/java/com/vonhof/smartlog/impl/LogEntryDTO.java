@@ -6,6 +6,7 @@ public class LogEntryDTO {
     private String clazz;
     private String[] tags;
     private StackTraceDTO[] trace;
+    private String author;
 
     public String getMessage() {
         return message;
@@ -45,5 +46,13 @@ public class LogEntryDTO {
 
     public void setTrace(StackTraceDTO[] trace) {
         this.trace = trace;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
     }
 }

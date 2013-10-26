@@ -1,5 +1,7 @@
 package com.vonhof.smartlog;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.blame.BlameResult;
 import org.eclipse.jgit.lib.PersonIdent;
@@ -17,24 +19,37 @@ public class GitAuthorResolver implements AuthorResolver {
     }
 
     @Override
-    public AuthorMap resolveAuthor(File file) throws Exception {
-        final AuthorMap authorMap = new AuthorMap(file);
+    public AuthorMap resolveAuthor(File file, String relativePath) throws Exception {
+        final AuthorMap authorMap = new AuthorMap(relativePath, FileUtils.readLines(file).size());
 
         String basePath = git.getRepository().getDirectory().getParentFile().getAbsolutePath();
         String filePath = file.getAbsolutePath();
         String relPath = filePath.substring(basePath.length()+1);
 
-        System.out.println("Reading blame for path: " + relPath + " | " + basePath);
-
         BlameResult result = git.blame().setFilePath(relPath).call();
-        int idx;
-        while((idx = result.computeNext()) > -1) {
-            for(;idx < result.lastLength();idx++) {
-                PersonIdent sourceAuthor = result.getSourceAuthor(idx);
-                String author = sourceAuthor.getEmailAddress();
-                authorMap.put(idx, author);
-            }
+        if (result == null) {
+            return authorMap;
         }
+
+        result.computeAll();
+
+        for(int line = 0;line < authorMap.getAuthors().length;line++) {
+            String author = "";
+            try {
+                if (result.hasSourceData(line)) {
+                    PersonIdent sourceAuthor = result.getSourceAuthor(line);
+                    author = sourceAuthor.getEmailAddress();
+                    if (StringUtils.isEmpty(author)) {
+                        author = sourceAuthor.getName();
+                    }
+                }
+            } catch (ArrayIndexOutOfBoundsException ex) {
+                //Ignore
+            }
+
+            authorMap.put(line, author);
+        }
+
 
         return authorMap;
     }

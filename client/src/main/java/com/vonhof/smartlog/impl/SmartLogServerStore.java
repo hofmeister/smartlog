@@ -16,8 +16,8 @@ public class SmartLogServerStore implements LoggerStore {
     private ObjectMapper om = new ObjectMapper();
 
     @Override
-    public void write(LogEntry logEntry) {
-        LogEntryDTO dto = toDTO(logEntry);
+    public void write(String author, LogEntry logEntry) {
+        LogEntryDTO dto = toDTO(author, logEntry);
 
         try {
             send(dto);
@@ -39,8 +39,9 @@ public class SmartLogServerStore implements LoggerStore {
         httpCon.disconnect();
     }
 
-    private LogEntryDTO toDTO(LogEntry logEntry) {
+    private LogEntryDTO toDTO(String author, LogEntry logEntry) {
         LogEntryDTO dto = new LogEntryDTO();
+        dto.setAuthor(author);
 
         String[] args = new String[logEntry.getArgs().length];
         for(int i = 0; i < logEntry.getArgs().length; i++) {

@@ -2,5 +2,5 @@ package com.vonhof.smartlog;
 
 public interface LoggerSubscriber {
 
-    public void logged(LogEntry logEntry);
+    public void logged(String author, LogEntry logEntry);
 }

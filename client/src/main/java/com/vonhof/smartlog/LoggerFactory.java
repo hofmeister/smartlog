@@ -1,6 +1,7 @@
 package com.vonhof.smartlog;
 
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -44,7 +45,6 @@ public class LoggerFactory {
             ex = (Throwable) args[args.length-1];
         }
 
-
         LogEntry logEntry = null;
         if (ex != null) {
             logEntry = new LogEntry(lvl, clz, tags, msg, formatArgs, ex);
@@ -52,8 +52,10 @@ public class LoggerFactory {
             logEntry = new LogEntry(lvl, clz, tags, msg, formatArgs, getTrace());
         }
 
+        String author = getAuthor(logEntry);
+
         if (store != null) {
-            store.write(logEntry);
+            store.write(author, logEntry);
         }
 
         if (!subscribers.isEmpty()) {
@@ -63,8 +65,21 @@ public class LoggerFactory {
             }
 
             for(LoggerSubscriber subscriber : subscribers) {
-                subscriber.logged(logEntry);
+                subscriber.logged(author, logEntry);
             }
+        }
+    }
+
+    private static String getAuthor(LogEntry entry) {
+        try {
+            if (entry.getTrace().length < 1) return "";
+            StackTraceElement stackTraceElement = entry.getTrace()[0];
+
+            Class<?> registryClass = Class.forName("com.vonhof.smartlog.SmartLogAuthorRegistry__");
+            Method getAuthorMethod = registryClass.getMethod("getAuthor", String.class, Integer.TYPE);
+            return (String) getAuthorMethod.invoke(null,stackTraceElement.getFileName(),stackTraceElement.getLineNumber());
+        } catch (Exception e) {
+            return "";
         }
     }
 
