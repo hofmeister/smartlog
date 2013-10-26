@@ -3,63 +3,61 @@ package com.vonhof.smartlog;
 
 import org.apache.commons.lang.StringUtils;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Arrays;
 
 public class AuthorRegistryClassWriter {
+    private static final String CLASS_POSTFIX = "__SLAUTHORS";
 
-    private String className = "SmartLogAuthorRegistry__";
-    private String packageName = "com.vonhof.smartlog";
+    private final String className;
+    private final String packageName;
 
     private final StringBuilder sb = new StringBuilder();
 
 
-    public AuthorRegistryClassWriter() {
-        startClass();
-    }
+    public AuthorRegistryClassWriter(AuthorMap authorMap) {
+        String[] classParts = authorMap.getClassName().split("\\.");
 
-    public void add(AuthorMap authorMap) {
-        sb.append("authors.put(\"").append(authorMap.getClassName()).append("\",\n")
-                .append("new String[] {\n\t\"")
-                .append(StringUtils.join(authorMap.getAuthors(), "\",\n\t\""))
-                .append("\"\n}")
-                .append(");\n");
+        className = classParts[classParts.length-1] + CLASS_POSTFIX;
+        packageName = StringUtils.join(Arrays.copyOfRange(classParts,0,classParts.length-1),".");
+
+        buildClassString(authorMap);
     }
 
 
-    private void startClass() {
+    private void buildClassString(AuthorMap authorMap) {
         sb.append("package ").append(packageName).append(";");
-        addImport(HashMap.class.getName());
-        addImport(Map.class.getName());
 
         sb.append("\npublic final class ").append(className).append(" {\n");
 
-        sb.append("private static final HashMap<String,String[]> authors = new HashMap<String,String[]>();\n");
-        sb.append("static {\n");
-    }
+        sb.append("private static String[] authors = new String[] {\n\t");
 
-    private void endClass() {
-        sb.append("\n}"); //End static block;
+        String last = null;
+        for(int i = 0; i < authorMap.getAuthors().length; i++) {
+            String author = authorMap.getAuthors()[i];
+            if (i > 0) {
+                sb.append(",");
+            }
+            if (i == 0 || !last.equals(author)) {
+               sb.append("\"").append(author).append("\"");
+            } else {
+                sb.append("null");
+            }
 
-        sb.append("public static String getAuthor(String className,int line) {\n");
-        sb.append("if (!authors.containsKey(className)) {return null;}\n");
-        sb.append("if (authors.get(className).length <= line) {return null;}\n");
-        sb.append("return authors.get(className)[line];\n");
-        sb.append("}\n");
+            last = author;
+        }
+
+        sb.append("\n};");
+
 
         sb.append("\n}");
     }
 
-    private void addImport(String className) {
-        sb.append("import ").append(className).append(";\n");
-    }
     @Override
     public String toString() {
-        endClass();
         return sb.toString();
     }
 
-    public String toFileName() {
+    public String getFileName() {
         return packageName.replaceAll("\\.","/")+"/"+className+".java";
     }
 }

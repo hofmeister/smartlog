@@ -16,6 +16,6 @@ public enum Level {
     }
 
     public boolean valid(Level lvl) {
-        return level <= lvl.level;
+        return level >= lvl.level;
     }
 }

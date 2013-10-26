@@ -7,6 +7,7 @@ public class LogEntryDTO {
     private String[] tags;
     private StackTraceDTO[] trace;
     private String author;
+    private String project;
 
     public String getMessage() {
         return message;
@@ -54,5 +55,13 @@ public class LogEntryDTO {
 
     public void setAuthor(String author) {
         this.author = author;
+    }
+
+    public String getProject() {
+        return project;
+    }
+
+    public void setProject(String project) {
+        this.project = project;
     }
 }

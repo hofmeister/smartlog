@@ -25,7 +25,6 @@ import java.util.List;
         threadSafe = true)
 public class SmartLogProcessorMojo extends AbstractMojo {
 
-    private AuthorRegistryClassWriter classWriter = new AuthorRegistryClassWriter();
     private MavenProject project;
     private File targetDir;
 
@@ -37,7 +36,7 @@ public class SmartLogProcessorMojo extends AbstractMojo {
             return;
         }
 
-        targetDir = new File(project.getBuild().getDirectory() + "/generated-sources");
+        targetDir = new File(project.getBuild().getDirectory() + "/smartlog");
 
         final List<String> compileSourceRoots = project.getCompileSourceRoots();
 
@@ -55,15 +54,13 @@ public class SmartLogProcessorMojo extends AbstractMojo {
             }
         }
 
-        writeRegistryClass();
-
         project.addCompileSourceRoot(targetDir.getPath());
     }
 
-    private void writeRegistryClass() throws MojoExecutionException {
+    private void writeRegistryClass(AuthorRegistryClassWriter classWriter) throws MojoExecutionException {
         String classDef = classWriter.toString();
 
-        File file = new File(targetDir + "/" + classWriter.toFileName());
+        File file = new File(targetDir + "/" + classWriter.getFileName());
         try {
             FileUtils.write(file, classDef);
         } catch (IOException e) {
@@ -101,11 +98,14 @@ public class SmartLogProcessorMojo extends AbstractMojo {
             if (file.isDirectory()) {
                 resolveDir(rootDir, file, authorResolver);
             } else {
-                String relPath = file.getAbsolutePath().substring(basePath.length()+1).replaceAll("/",".");
-                relPath = relPath.substring(0, relPath.length()-5); //Remove .java
-                AuthorMap authorMap = authorResolver.resolveAuthor(file,relPath);
-                getLog().info(String.format("Resolved authors for class: " + relPath));
-                classWriter.add(authorMap);
+                String className = file.getAbsolutePath().substring(basePath.length()+1).replaceAll("/",".");
+                className = className.substring(0, className.length()-5); //Remove .java
+                AuthorMap authorMap = authorResolver.resolveAuthor(file,className);
+                getLog().info(String.format("Resolved authors for class: " + className));
+
+                AuthorRegistryClassWriter classWriter = new AuthorRegistryClassWriter(authorMap);
+
+                writeRegistryClass(classWriter);
             }
         }
     }

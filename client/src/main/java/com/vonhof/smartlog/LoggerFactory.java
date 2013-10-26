@@ -4,7 +4,7 @@ package com.vonhof.smartlog;
 import com.vonhof.smartlog.store.LoggerStore;
 import com.vonhof.smartlog.subscriber.LoggerSubscriber;
 
-import java.lang.reflect.Method;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -60,7 +60,7 @@ public class LoggerFactory {
             logEntry = new LogEntry(lvl, clz, tags, msg, formatArgs, getTrace());
         }
 
-        String author = getAuthor(logEntry);
+        String author = getAuthor(clz, logEntry);
 
         if (store != null) {
             store.write(author, logEntry);
@@ -74,16 +74,29 @@ public class LoggerFactory {
         }
     }
 
-    private static String getAuthor(LogEntry entry) {
+    private static String getAuthor(Class target, LogEntry entry) {
         try {
             if (entry.getTrace().length < 1) return "";
             StackTraceElement stackTraceElement = entry.getTrace()[0];
 
-            Class<?> registryClass = Class.forName("com.vonhof.smartlog.SmartLogAuthorRegistry__");
-            Method getAuthorMethod = registryClass.getMethod("getAuthor", String.class, Integer.TYPE);
-            return (String) getAuthorMethod.invoke(null,stackTraceElement.getClassName(),stackTraceElement.getLineNumber());
+            Class<?> registryClass = target.getClassLoader().loadClass(target.getName() + "__SLAUTHORS");
+            Field authors = registryClass.getDeclaredField("authors");
+            authors.setAccessible(true);
+
+            String[] authorList = (String[]) authors.get(null);
+            if (authorList == null) {
+                return null;
+            }
+            int line = stackTraceElement.getLineNumber()-1; //Lines are zero based in author list
+
+            if (authorList.length <= line) {
+                return null;
+            }
+            for (int i = line; i > -1; i--) {
+                if (authorList[i] != null) return authorList[i];
+            }
+            return null;
         } catch (Exception e) {
-            System.out.println("Could not find registry class");
             return "";
         }
     }

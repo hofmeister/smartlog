@@ -27,16 +27,16 @@ public class GitAuthorResolver implements AuthorResolver {
         String relPath = filePath.substring(basePath.length()+1);
 
         BlameResult result = git.blame().setFilePath(relPath).call();
-        if (result == null) {
-            return authorMap;
+        if (result != null) {
+            result.computeAll();
         }
 
-        result.computeAll();
+
 
         for(int line = 0;line < authorMap.getAuthors().length;line++) {
             String author = "";
             try {
-                if (result.hasSourceData(line)) {
+                if (result != null && result.hasSourceData(line)) {
                     PersonIdent sourceAuthor = result.getSourceAuthor(line);
                     author = sourceAuthor.getEmailAddress();
                     if (StringUtils.isEmpty(author)) {
