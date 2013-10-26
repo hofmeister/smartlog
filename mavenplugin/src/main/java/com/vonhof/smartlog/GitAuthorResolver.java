@@ -47,6 +47,11 @@ public class GitAuthorResolver implements AuthorResolver {
                 //Ignore
             }
 
+            if (StringUtils.isEmpty(author)) {
+                //Uncomitted lines - fall back to config user
+                author = git.getRepository().getConfig().getString("user",null,"email");
+            }
+
             authorMap.put(line, author);
         }
 
