@@ -1,14 +1,12 @@
 package com.vonhof.smartlog.impl;
 
 import com.vonhof.smartlog.LogEntry;
-import com.vonhof.smartlog.LoggerSubscriber;
-import org.codehaus.plexus.util.StringUtils;
 
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
-public class JavaLoggingSubscriber implements LoggerSubscriber {
+public class JavaLoggingSubscriber extends ConsoleLogSubscriber {
     @Override
     public void logged(String author, LogEntry logEntry) {
         Logger logger = Logger.getLogger(logEntry.getClz().getName());
@@ -37,16 +35,8 @@ public class JavaLoggingSubscriber implements LoggerSubscriber {
             return;
         }
 
-        String message = logEntry.getFormattedMessage();
-        if (author != null && !author.isEmpty()) {
-            message = "{"+author+"} " + message;
-        }
 
-        if (logEntry.getTags() != null && logEntry.getTags().length > 0) {
-            message = String.format("[%s] %s", StringUtils.join(logEntry.getTags(),","),message);
-        }
-
-        LogRecord logRecord = new LogRecord(loggingLevel, message);
+        LogRecord logRecord = new LogRecord(loggingLevel, getMessage(author,logEntry));
         logRecord.setSourceClassName(logEntry.getTrace()[0].getClassName());
         logRecord.setSourceMethodName(logEntry.getTrace()[0].getMethodName());
         logRecord.setParameters(logEntry.getArgs());

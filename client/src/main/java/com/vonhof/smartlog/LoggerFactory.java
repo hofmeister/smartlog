@@ -64,10 +64,6 @@ public class LoggerFactory {
         }
 
         if (!subscribers.isEmpty()) {
-            String formattedMsg = null;
-            if (formatArgs.length > 0 && msg != null) {
-                formattedMsg = String.format(msg, formatArgs);
-            }
 
             for(LoggerSubscriber subscriber : subscribers) {
                 subscriber.logged(author, logEntry);
