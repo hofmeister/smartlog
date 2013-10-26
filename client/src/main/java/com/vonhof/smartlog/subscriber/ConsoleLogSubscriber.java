@@ -1,7 +1,6 @@
 package com.vonhof.smartlog.subscriber;
 
 import com.vonhof.smartlog.LogEntry;
-import com.vonhof.smartlog.LoggerSubscriber;
 import org.apache.commons.lang.StringUtils;
 
 

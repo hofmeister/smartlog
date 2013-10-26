@@ -2,6 +2,7 @@ package com.vonhof.smartlog;
 
 
 import com.vonhof.smartlog.store.LoggerStore;
+import com.vonhof.smartlog.subscriber.LoggerSubscriber;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
