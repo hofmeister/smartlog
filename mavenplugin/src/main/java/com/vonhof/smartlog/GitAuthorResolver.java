@@ -19,8 +19,8 @@ public class GitAuthorResolver implements AuthorResolver {
     }
 
     @Override
-    public AuthorMap resolveAuthor(File file, String relativePath) throws Exception {
-        final AuthorMap authorMap = new AuthorMap(relativePath, FileUtils.readLines(file).size());
+    public AuthorMap resolveAuthor(File file, String className) throws Exception {
+        final AuthorMap authorMap = new AuthorMap(className, FileUtils.readLines(file).size());
 
         String basePath = git.getRepository().getDirectory().getParentFile().getAbsolutePath();
         String filePath = file.getAbsolutePath();

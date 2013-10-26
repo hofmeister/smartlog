@@ -82,8 +82,9 @@ public class LoggerFactory {
 
             Class<?> registryClass = Class.forName("com.vonhof.smartlog.SmartLogAuthorRegistry__");
             Method getAuthorMethod = registryClass.getMethod("getAuthor", String.class, Integer.TYPE);
-            return (String) getAuthorMethod.invoke(null,stackTraceElement.getFileName(),stackTraceElement.getLineNumber());
+            return (String) getAuthorMethod.invoke(null,stackTraceElement.getClassName(),stackTraceElement.getLineNumber());
         } catch (Exception e) {
+            System.out.println("Could not find registry class");
             return "";
         }
     }

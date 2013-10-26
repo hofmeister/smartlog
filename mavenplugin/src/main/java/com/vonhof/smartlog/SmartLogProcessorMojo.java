@@ -56,6 +56,8 @@ public class SmartLogProcessorMojo extends AbstractMojo {
         }
 
         writeRegistryClass();
+
+        project.addCompileSourceRoot(targetDir.getPath());
     }
 
     private void writeRegistryClass() throws MojoExecutionException {
@@ -99,9 +101,10 @@ public class SmartLogProcessorMojo extends AbstractMojo {
             if (file.isDirectory()) {
                 resolveDir(rootDir, file, authorResolver);
             } else {
-                String relPath = file.getAbsolutePath().substring(basePath.length()+1);
+                String relPath = file.getAbsolutePath().substring(basePath.length()+1).replaceAll("/",".");
+                relPath = relPath.substring(0, relPath.length()-5); //Remove .java
                 AuthorMap authorMap = authorResolver.resolveAuthor(file,relPath);
-                getLog().info(String.format("Resolved authors for file: " + relPath));
+                getLog().info(String.format("Resolved authors for class: " + relPath));
                 classWriter.add(authorMap);
             }
         }

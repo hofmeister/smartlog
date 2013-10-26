@@ -39,7 +39,7 @@ public class JavaLoggingSubscriber implements LoggerSubscriber {
 
         String message = logEntry.getFormattedMessage();
         if (author != null && !author.isEmpty()) {
-            message += " by " + author;
+            message = "{"+author+"} " + message;
         }
 
         if (logEntry.getTags() != null && logEntry.getTags().length > 0) {

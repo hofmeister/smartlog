@@ -32,10 +32,10 @@ public final class AuthorRegistryClassWriter {
     private void endClass() {
         sb.append("\n}"); //End static block;
 
-        sb.append("public static String getAuthor(String file,int line) {\n");
-        sb.append("if (!authors.containsKey(file)) {return null;}\n");
-        sb.append("if (authors.get(file).length <= line) {return null;}\n");
-        sb.append("return authors.get(file)[line];\n");
+        sb.append("public static String getAuthor(String className,int line) {\n");
+        sb.append("if (!authors.containsKey(className)) {return null;}\n");
+        sb.append("if (authors.get(className).length <= line) {return null;}\n");
+        sb.append("return authors.get(className)[line];\n");
         sb.append("}\n");
 
         sb.append("\n}");
@@ -46,7 +46,7 @@ public final class AuthorRegistryClassWriter {
     }
 
     public void add(AuthorMap authorMap) {
-        sb.append("authors.put(\"").append(authorMap.getFile()).append("\",\n")
+        sb.append("authors.put(\"").append(authorMap.getClassName()).append("\",\n")
                 .append("new String[] {\n\t\"")
                     .append(StringUtils.join(authorMap.getAuthors(), "\",\n\t\""))
                 .append("\"\n}")
