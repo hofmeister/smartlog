@@ -21,7 +21,7 @@ public class Server {
         webi.addBean(BabelShark.getDefaultInstance());
 
         final Client client = new TransportClient()
-                .addTransportAddress(new InetSocketTransportAddress("localhost", 9300));
+                .addTransportAddress(new InetSocketTransportAddress("localhost", 9301));
 
         webi.addBean(Client.class, client);
 

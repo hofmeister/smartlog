@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class LoggerFactory {
 
-    private static volatile Level defaultLevel = Level.INFO;
+    private static volatile Level defaultLevel = Level.DEBUG;
 
     private static Map<String,Level> prefixLevels = new ConcurrentHashMap<String, Level>();
 
@@ -24,17 +24,28 @@ public class LoggerFactory {
 
     private static List<LoggerSubscriber> subscribers = new ArrayList<LoggerSubscriber>();
 
-    private static StackTraceElement[] getTrace() {
+    private static StackTraceElement[] getTrace(LocationInfo location) {
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
 
         List<StackTraceElement> out = new LinkedList<StackTraceElement>();
 
         boolean first = true;
+        boolean found = location == null;
 
         for(StackTraceElement elm : stackTrace) {
             if (first || elm.getClassName().startsWith("com.vonhof.smartlog.")) {
                 first = false;
                 continue;
+            }
+
+            if (!found) {
+                if (location.getClassName().equals(elm.getClassName())
+                        && location.getLineNumber() == elm.getLineNumber()
+                        && location.getFileName().equals(elm.getFileName())) {
+                    found = true;
+                } else {
+                    continue;
+                }
             }
 
             out.add(elm);
@@ -44,20 +55,24 @@ public class LoggerFactory {
         return out.toArray(new StackTraceElement[0]);
     }
 
-    static void write(Level lvl, Class clz, String[] tags, String msg, Object ... args) {
+    public static void write(Level lvl, Class clz, String[] tags, String msg, Object ... args) {
         Object[] formatArgs = args;
         Throwable ex = null;
+        LocationInfo location = null;
 
         if (args.length > 0 && args[args.length-1] instanceof Throwable) {
             formatArgs = Arrays.copyOf(args,args.length-1);
             ex = (Throwable) args[args.length-1];
+        } else if (args.length > 0 && args[args.length-1] instanceof LocationInfo) {
+            formatArgs = Arrays.copyOf(args,args.length-1);
+            location = (LocationInfo) args[args.length-1];
         }
 
         LogEntry logEntry = null;
         if (ex != null) {
             logEntry = new LogEntry(lvl, clz, tags, msg, formatArgs, ex);
         } else {
-            logEntry = new LogEntry(lvl, clz, tags, msg, formatArgs, getTrace());
+            logEntry = new LogEntry(lvl, clz, tags, msg, formatArgs, getTrace(location));
         }
 
         String author = getAuthor(clz, logEntry);
@@ -87,6 +102,7 @@ public class LoggerFactory {
             if (authorList == null) {
                 return null;
             }
+
             int line = stackTraceElement.getLineNumber()-1; //Lines are zero based in author list
 
             if (authorList.length <= line) {

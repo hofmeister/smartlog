@@ -11,20 +11,16 @@ public class AuthorRegistryClassWriter {
     private final String className;
     private final String packageName;
 
-    private final StringBuilder sb = new StringBuilder();
 
+    public AuthorRegistryClassWriter(String className) {
+        String[] classParts = className.split("\\.");
 
-    public AuthorRegistryClassWriter(AuthorMap authorMap) {
-        String[] classParts = authorMap.getClassName().split("\\.");
-
-        className = classParts[classParts.length-1] + CLASS_POSTFIX;
-        packageName = StringUtils.join(Arrays.copyOfRange(classParts,0,classParts.length-1),".");
-
-        buildClassString(authorMap);
+        this.className = classParts[classParts.length-1] + CLASS_POSTFIX;
+        this.packageName = StringUtils.join(Arrays.copyOfRange(classParts,0,classParts.length-1),".");
     }
 
-
-    private void buildClassString(AuthorMap authorMap) {
+    public String buildClassString(AuthorMap authorMap) {
+        StringBuilder sb = new StringBuilder();
         sb.append("package ").append(packageName).append(";");
 
         sb.append("\npublic final class ").append(className).append(" {\n");
@@ -50,12 +46,10 @@ public class AuthorRegistryClassWriter {
 
 
         sb.append("\n}");
-    }
 
-    @Override
-    public String toString() {
         return sb.toString();
     }
+
 
     public String getFileName() {
         return packageName.replaceAll("\\.","/")+"/"+className+".java";

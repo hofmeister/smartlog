@@ -57,14 +57,12 @@ public class SmartLogProcessorMojo extends AbstractMojo {
         project.addCompileSourceRoot(targetDir.getPath());
     }
 
-    private void writeRegistryClass(AuthorRegistryClassWriter classWriter) throws MojoExecutionException {
-        String classDef = classWriter.toString();
+    private void writeRegistryClass(String classDef, File targetFile) throws MojoExecutionException {
 
-        File file = new File(targetDir + "/" + classWriter.getFileName());
         try {
-            FileUtils.write(file, classDef);
+            FileUtils.write(targetFile, classDef);
         } catch (IOException e) {
-            throw new MojoExecutionException("Could not write to file: " + file,e);
+            throw new MojoExecutionException("Could not write to file: " + targetFile,e);
         }
     }
 
@@ -97,15 +95,17 @@ public class SmartLogProcessorMojo extends AbstractMojo {
         for(File file : dir.listFiles()) {
             if (file.isDirectory()) {
                 resolveDir(rootDir, file, authorResolver);
-            } else {
+            } else if (file.getName().endsWith(".java") && !file.getName().startsWith("package-info")) {
                 String className = file.getAbsolutePath().substring(basePath.length()+1).replaceAll("/",".");
                 className = className.substring(0, className.length()-5); //Remove .java
+
+                AuthorRegistryClassWriter classWriter = new AuthorRegistryClassWriter(className);
+                File targetFile = new File(targetDir + "/" + classWriter.getFileName());
+
                 AuthorMap authorMap = authorResolver.resolveAuthor(file,className);
-                getLog().info(String.format("Resolved authors for class: " + className));
+                getLog().info("Resolved authors for class: " + className);
 
-                AuthorRegistryClassWriter classWriter = new AuthorRegistryClassWriter(authorMap);
-
-                writeRegistryClass(classWriter);
+                writeRegistryClass(classWriter.buildClassString(authorMap), targetFile);
             }
         }
     }
