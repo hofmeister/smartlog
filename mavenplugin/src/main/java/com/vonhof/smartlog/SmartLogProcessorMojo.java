@@ -1,6 +1,10 @@
 package com.vonhof.smartlog;
 
 
+import com.vonhof.smartlog.registry.AuthorRegistryWriter;
+import com.vonhof.smartlog.vcs.AuthorMap;
+import com.vonhof.smartlog.vcs.VCSFactory;
+import com.vonhof.smartlog.vcs.VCSRepository;
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -8,8 +12,6 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.project.MavenProject;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,10 +29,10 @@ import java.util.concurrent.TimeUnit;
         defaultPhase = LifecyclePhase.GENERATE_SOURCES,
         threadSafe = true)
 public class SmartLogProcessorMojo extends AbstractMojo {
-    private final ExecutorService pool = Executors.newFixedThreadPool(20);
+    private final ExecutorService pool = Executors.newFixedThreadPool(100);
 
     private MavenProject project;
-    private AuthorResolver authorResolver;
+    private VCSRepository repository;
     private File targetDir;
 
 
@@ -44,7 +46,7 @@ public class SmartLogProcessorMojo extends AbstractMojo {
 
         targetDir = new File(project.getBuild().getDirectory() + "/smartlog");
 
-        authorResolver = getAuthorResolver();
+        repository = VCSFactory.getRepository(project.getFile());
 
         if (!targetDir.exists()) {
             targetDir.mkdir();
@@ -69,26 +71,6 @@ public class SmartLogProcessorMojo extends AbstractMojo {
         }
 
         project.addCompileSourceRoot(targetDir.getPath());
-    }
-
-
-    private AuthorResolver getAuthorResolver() throws MojoExecutionException {
-        Repository repository;
-        try {
-            repository = new FileRepositoryBuilder()
-                    .setWorkTree(project.getFile().getParentFile())
-                    .readEnvironment()
-                    .findGitDir(project.getFile()).build();
-
-        } catch (IOException e) {
-            throw new MojoExecutionException("Could not find GIT root",e);
-        }
-
-        if (!repository.getDirectory().exists()) {
-            throw new MojoExecutionException("Git root does not exist: " + repository.getDirectory());
-        }
-
-        return new GitAuthorResolver(repository);
     }
 
     private void resolveDir(File rootDir) throws Exception {
@@ -125,24 +107,27 @@ public class SmartLogProcessorMojo extends AbstractMojo {
 
         @Override
         public void run() {
-            AuthorRegistryClassWriter classWriter = new AuthorRegistryClassWriter(className);
+            long startTime = System.currentTimeMillis();
+            AuthorRegistryWriter classWriter = new AuthorRegistryWriter(className);
             File targetFile = new File(targetDir + "/" + classWriter.getFileName());
 
             AuthorMap authorMap = null;
             try {
-                authorMap = authorResolver.resolveAuthor(file, className);
+                authorMap = repository.resolveAuthor(file);
             } catch (Exception e) {
                 getLog().warn("Could not resolve authors for file: " + file, e);
                 return;
             }
 
-            getLog().info("Resolved authors for class: " + className);
+            getLog().info("Resolved authors for class: " + className + " in " + (System.currentTimeMillis()-startTime) + "ms");
 
             try {
                 FileUtils.write(targetFile, classWriter.buildClassString(authorMap));
             } catch (IOException e) {
                 getLog().warn("Could not write to file: " + targetFile, e);
             }
+
+
         }
     }
 }

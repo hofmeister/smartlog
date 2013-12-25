@@ -1,6 +1,8 @@
 package com.vonhof.smartlog.store;
 
 import com.vonhof.smartlog.LogEntry;
+import com.vonhof.smartlog.dto.LogEntryDTO;
+import com.vonhof.smartlog.dto.StackTraceDTO;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;

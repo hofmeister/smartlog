@@ -1,22 +1,22 @@
-package com.vonhof.smartlog;
+package com.vonhof.smartlog.registry;
 
-
+import com.vonhof.smartlog.vcs.AuthorMap;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.Arrays;
 
-public class AuthorRegistryClassWriter {
+public class AuthorRegistryWriter {
     private static final String CLASS_POSTFIX = "__SLAUTHORS";
 
     private final String className;
     private final String packageName;
 
 
-    public AuthorRegistryClassWriter(String className) {
+    public AuthorRegistryWriter(String className) {
         String[] classParts = className.split("\\.");
 
         this.className = classParts[classParts.length-1] + CLASS_POSTFIX;
-        this.packageName = StringUtils.join(Arrays.copyOfRange(classParts,0,classParts.length-1),".");
+        this.packageName = StringUtils.join(Arrays.copyOfRange(classParts, 0, classParts.length - 1), ".");
     }
 
     public String buildClassString(AuthorMap authorMap) {
@@ -34,7 +34,7 @@ public class AuthorRegistryClassWriter {
                 sb.append(",");
             }
             if (i == 0 || !last.equals(author)) {
-               sb.append("\"").append(author).append("\"");
+                sb.append("\"").append(author).append("\"");
             } else {
                 sb.append("null");
             }
@@ -43,7 +43,6 @@ public class AuthorRegistryClassWriter {
         }
 
         sb.append("\n};");
-
 
         sb.append("\n}");
 

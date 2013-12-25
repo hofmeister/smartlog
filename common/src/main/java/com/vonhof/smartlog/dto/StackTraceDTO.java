@@ -4,6 +4,7 @@ public class StackTraceDTO {
     private String clazz;
     private String method;
     private int line;
+    private String file;
 
     public String getClazz() {
         return clazz;
@@ -27,5 +28,13 @@ public class StackTraceDTO {
 
     public void setLine(int line) {
         this.line = line;
+    }
+
+    public void setFile(String file) {
+        this.file = file;
+    }
+
+    public String getFile() {
+        return file;
     }
 }

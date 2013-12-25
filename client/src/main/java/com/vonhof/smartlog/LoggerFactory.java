@@ -1,10 +1,12 @@
 package com.vonhof.smartlog;
 
 
+import com.vonhof.smartlog.registry.AuthorRegistryReader;
 import com.vonhof.smartlog.store.LoggerStore;
 import com.vonhof.smartlog.subscriber.LoggerSubscriber;
+import com.vonhof.smartlog.vcs.VCSFactory;
 
-import java.lang.reflect.Field;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -33,7 +35,7 @@ public class LoggerFactory {
         boolean found = location == null;
 
         for(StackTraceElement elm : stackTrace) {
-            if (first || elm.getClassName().startsWith("com.vonhof.smartlog.")) {
+            if (first || !elm.getClassName().startsWith("com.vonhof.smartlog.")) {
                 first = false;
                 continue;
             }
@@ -82,7 +84,6 @@ public class LoggerFactory {
         }
 
         if (!subscribers.isEmpty()) {
-
             for(LoggerSubscriber subscriber : subscribers) {
                 subscriber.logged(author, logEntry);
             }
@@ -90,31 +91,32 @@ public class LoggerFactory {
     }
 
     private static String getAuthor(Class target, LogEntry entry) {
-        try {
-            if (entry.getTrace().length < 1) return "";
-            StackTraceElement stackTraceElement = entry.getTrace()[0];
-
-            Class<?> registryClass = target.getClassLoader().loadClass(target.getName() + "__SLAUTHORS");
-            Field authors = registryClass.getDeclaredField("authors");
-            authors.setAccessible(true);
-
-            String[] authorList = (String[]) authors.get(null);
-            if (authorList == null) {
-                return null;
-            }
-
-            int line = stackTraceElement.getLineNumber()-1; //Lines are zero based in author list
-
-            if (authorList.length <= line) {
-                return null;
-            }
-            for (int i = line; i > -1; i--) {
-                if (authorList[i] != null) return authorList[i];
-            }
+        if (entry.getTrace().length < 1) {
             return null;
-        } catch (Exception e) {
-            return "";
         }
+
+        StackTraceElement stackTraceElement = entry.getTrace()[0];
+        int line = stackTraceElement.getLineNumber()-1; //Lines are zero based in author list
+
+        String author = getAuthorFromRegistry(target, line);
+        if (author == null) {
+            return getAuthorFromVCS(stackTraceElement.getFileName(), line);
+        }
+
+        return author;
+    }
+
+    private static String getAuthorFromVCS(String fileName, int line) {
+        File file = new File(fileName);
+        try {
+            return VCSFactory.getRepository(file).resolveAuthor(file,line);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static String getAuthorFromRegistry(Class target, int line) {
+        return new AuthorRegistryReader(target).getAuthor(line);
     }
 
     public static void addSubscriber(LoggerSubscriber subscriber) {
@@ -163,6 +165,4 @@ public class LoggerFactory {
     public static Logger getLogger(Class clz, String ... tags) {
         return new Logger(clz,tags);
     }
-
-
 }

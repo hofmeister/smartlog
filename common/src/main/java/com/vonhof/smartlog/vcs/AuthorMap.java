@@ -1,19 +1,16 @@
-package com.vonhof.smartlog;
+package com.vonhof.smartlog.vcs;
 
 
+import java.io.File;
 import java.io.IOException;
 
 public class AuthorMap {
-    private final String className;
     private final String[] authors;
+    private final File file;
 
-    public AuthorMap(String className, int lineCount) throws IOException {
-        this.className = className;
+    public AuthorMap(File file, int lineCount) throws IOException {
+        this.file = file;
         authors = new String[lineCount];
-    }
-
-    public String getClassName() {
-        return className;
     }
 
     public void put(int line, String author) {
@@ -22,5 +19,9 @@ public class AuthorMap {
 
     public String[] getAuthors() {
         return authors;
+    }
+
+    public File getFile() {
+        return file;
     }
 }
