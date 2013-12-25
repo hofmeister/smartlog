@@ -4,19 +4,29 @@ package com.vonhof.smartlog;
 public class Logger {
     private final String[] tags;
     private final Class clz;
+    private final SmartLogInstance smartLog;
 
     public Logger(Class clz, String ... tags) {
+        this(SmartLog.getInstance(), clz, tags);
+    }
+
+    public Logger(SmartLogInstance smartLog, Class clz, String ... tags) {
         this.tags = tags;
         this.clz = clz;
+        this.smartLog = smartLog;
+    }
+
+    public static Logger getLogger(Class clz, String ... tags) {
+        return new Logger(clz,tags);
     }
 
     public boolean willLog(Level lvl) {
-        Level logLevel = LoggerFactory.getLogLevel(clz, tags);
+        Level logLevel = smartLog.getLogLevel(clz, tags);
         return logLevel.valid(lvl);
     }
 
     public boolean willLog(Level lvl, String ... tags) {
-        Level logLevel = LoggerFactory.getLogLevel(clz, tags);
+        Level logLevel = smartLog.getLogLevel(clz, tags);
         return logLevel.valid(lvl);
     }
 
@@ -28,8 +38,7 @@ public class Logger {
         if (!willLog(lvl, tags)) {
             return;
         }
-
-        LoggerFactory.write(lvl, clz, tags, msg, args);
+        smartLog.write(lvl, clz, tags, msg, args);
     }
 
     public void trace(String msg, Object ... args) {

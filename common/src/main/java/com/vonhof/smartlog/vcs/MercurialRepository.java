@@ -16,7 +16,6 @@ public class MercurialRepository implements VCSRepository {
     @Override
     public void init(File file) throws IOException {
         repo = Repository.open(file);
-
     }
 
     @Override

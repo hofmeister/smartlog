@@ -9,7 +9,8 @@ public class VCSFactory {
     private static Map<String,VCSRepository> cached = new ConcurrentHashMap<String, VCSRepository>();
 
     private static Class<VCSRepository>[] vcsRepoTypes = new Class[] {
-        GitRepository.class
+        GitRepository.class,
+        MercurialRepository.class
     };
 
     public static VCSRepository getRepository(File file) {

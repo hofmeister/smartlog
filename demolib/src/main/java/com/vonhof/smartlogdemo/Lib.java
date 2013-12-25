@@ -2,11 +2,11 @@ package com.vonhof.smartlogdemo;
 
 
 import com.vonhof.smartlog.Logger;
-import com.vonhof.smartlog.LoggerFactory;
+import com.vonhof.smartlog.SmartLog;
 
 public class Lib {
 
-    private static final Logger log = LoggerFactory.getLogger(Lib.class,"lib","demo");
+    private static final Logger log = SmartLog.getLogger(Lib.class, "lib", "demo");
 
     public Lib() {
 

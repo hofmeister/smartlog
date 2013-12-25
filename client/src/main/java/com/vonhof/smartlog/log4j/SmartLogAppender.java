@@ -2,16 +2,18 @@ package com.vonhof.smartlog.log4j;
 
 
 import com.vonhof.smartlog.LocationInfo;
-import com.vonhof.smartlog.LoggerFactory;
-import com.vonhof.smartlog.store.SmartLogServerStore;
+import com.vonhof.smartlog.SmartLog;
+import com.vonhof.smartlog.SmartLogInstance;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.Level;
 import org.apache.log4j.spi.LoggingEvent;
 
 public class SmartLogAppender extends AppenderSkeleton {
 
+    private final SmartLogInstance smartLog;
+
     public SmartLogAppender() {
-        LoggerFactory.setStore(new SmartLogServerStore());
+        smartLog = SmartLog.getInstance();
     }
 
     @Override
@@ -58,10 +60,10 @@ public class SmartLogAppender extends AppenderSkeleton {
         }
 
         if (event.getThrowableInformation() != null) {
-            LoggerFactory.write(smartLevel, loggerClass,
-                    new String[0],event.getRenderedMessage(),event.getThrowableInformation().getThrowable());
+            smartLog.write(smartLevel, loggerClass,
+                    new String[0], event.getRenderedMessage(), event.getThrowableInformation().getThrowable());
         } else {
-            LoggerFactory.write(smartLevel, loggerClass,
+            smartLog.write(smartLevel, loggerClass,
                     new String[0], event.getRenderedMessage(), location);
         }
 
