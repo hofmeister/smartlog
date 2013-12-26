@@ -85,7 +85,7 @@ public class SmartLogInstance {
         return out.toArray(new StackTraceElement[0]);
     }
 
-    public void write(Level lvl, Class clz, String[] tags, String msg, Object ... args) {
+    public String write(Level lvl, Class clz, String[] tags, String msg, Object... args) {
         Object[] formatArgs = args;
         Throwable ex = null;
         LocationInfo location = null;
@@ -116,6 +116,8 @@ public class SmartLogInstance {
                 subscriber.logged(author, logEntry);
             }
         }
+
+        return author;
     }
 
     private String getAuthor(Class target, LogEntry entry) {

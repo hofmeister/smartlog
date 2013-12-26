@@ -4,13 +4,20 @@ package com.vonhof.smartlog.log4j;
 import com.vonhof.smartlog.LocationInfo;
 import com.vonhof.smartlog.SmartLogInstance;
 import com.vonhof.smartlog.subscriber.SystemOutSubscriber;
+import org.apache.log4j.Appender;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.Level;
+import org.apache.log4j.MDC;
+import org.apache.log4j.helpers.AppenderAttachableImpl;
+import org.apache.log4j.spi.AppenderAttachable;
 import org.apache.log4j.spi.LoggingEvent;
 
-public class SmartLogAppender extends AppenderSkeleton {
+import java.util.Enumeration;
+
+public class SmartLogAppender extends AppenderSkeleton implements AppenderAttachable {
 
     private final SmartLogInstance smartLog;
+    private AppenderAttachableImpl aai = new AppenderAttachableImpl();
 
     public SmartLogAppender() {
         smartLog = new SmartLogInstance();
@@ -22,11 +29,14 @@ public class SmartLogAppender extends AppenderSkeleton {
 
         try {
             doSmartLog(event);
+
         } catch (Exception e) {
             java.util.logging.Logger
                     .getLogger(SmartLogAppender.class.getName())
                     .log(java.util.logging.Level.SEVERE, "Failed to append to smart log:" + event.getLocationInformation(), e);
         }
+
+        aai.appendLoopOnAppenders(event);
     }
 
     private void doSmartLog(LoggingEvent event) throws ClassNotFoundException {
@@ -59,15 +69,19 @@ public class SmartLogAppender extends AppenderSkeleton {
                 smartLevel = com.vonhof.smartlog.Level.TRACE;
                 break;
         }
+        String author;
 
         if (event.getThrowableInformation() != null) {
-            smartLog.write(smartLevel, loggerClass,
+            author = smartLog.write(smartLevel, loggerClass,
                     new String[0], event.getRenderedMessage(), event.getThrowableInformation().getThrowable());
         } else {
-            smartLog.write(smartLevel, loggerClass,
+            author = smartLog.write(smartLevel, loggerClass,
                     new String[0], event.getRenderedMessage(), location);
         }
 
+        if (author != null) {
+            MDC.put("_author", author);
+        }
     }
 
     @Override
@@ -78,5 +92,34 @@ public class SmartLogAppender extends AppenderSkeleton {
     @Override
     public boolean requiresLayout() {
         return false;
+    }
+
+    public void addAppender(Appender appender) {
+        aai.addAppender(appender);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Enumeration<Object> getAllAppenders() {
+        return aai.getAllAppenders();
+    }
+
+    public Appender getAppender(String s) {
+        return aai.getAppender(name);
+    }
+
+    public boolean isAttached(Appender appender) {
+        return aai.isAttached(appender);
+    }
+
+    public void removeAllAppenders() {
+        aai.removeAllAppenders();
+    }
+
+    public void removeAppender(Appender appender) {
+        aai.removeAppender(appender);
+    }
+
+    public void removeAppender(String s) {
+        aai.removeAppender(s);
     }
 }
