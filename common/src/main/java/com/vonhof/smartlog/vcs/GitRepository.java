@@ -1,16 +1,15 @@
 package com.vonhof.smartlog.vcs;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.blame.BlameResult;
-import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.LinkedList;
+import java.util.List;
 
 public class GitRepository implements VCSRepository {
 
@@ -25,10 +24,20 @@ public class GitRepository implements VCSRepository {
             throw new IllegalStateException("Can not init git repo twice.");
         }
 
-        repository = new FileRepositoryBuilder()
-                .setWorkTree(file)
+        if (!file.exists()) {
+            throw new IllegalStateException("Can not init git repo from non-existing file: " + file.getAbsolutePath());
+        }
+
+
+        FileRepositoryBuilder fileRepositoryBuilder = new FileRepositoryBuilder();
+
+        fileRepositoryBuilder
                 .readEnvironment()
-                .findGitDir(file).build();
+                .findGitDir(file.getAbsoluteFile());
+
+        repository = fileRepositoryBuilder
+                .setWorkTree(fileRepositoryBuilder.getGitDir().getParentFile())
+                .build();
 
         if (!repository.getDirectory().exists()) {
             throw new IOException("Git root does not exist: " + repository.getDirectory());
@@ -41,36 +50,84 @@ public class GitRepository implements VCSRepository {
 
     @Override
     public AuthorMap resolveAuthor(File file) throws Exception {
-        final AuthorMap authorMap = new AuthorMap(file, FileUtils.readLines(file).size());
-
-        BlameResult result = getBlameResult(file);
-        if (result != null) {
-            result.computeAll();
+        if (!file.exists()) {
+            return new AuthorMap(file,0);
         }
 
-        for(int line = 0;line < authorMap.getAuthors().length;line++) {
-            String author = getAuthorFromLine(result, line);
-            authorMap.put(line, author);
+        List<String> result = getAuthors(file);
+
+        final AuthorMap authorMap = new AuthorMap(file, result.size());
+
+        int idx = 0;
+        for(String author : result) {
+            authorMap.put(idx, author);
+            idx++;
         }
 
         return authorMap;
     }
 
+    /**
+     * Resolve author
+     * @param file
+     * @param lineNum 1-based
+     * @return
+     * @throws Exception
+     */
     @Override
     public String resolveAuthor(File file, int lineNum) throws Exception {
-
-        BlameResult result = getBlameResult(file);
-        if (result != null) {
-            result.computeRange(lineNum, lineNum);
+        if (!file.exists()) {
+            return null;
         }
 
-        return getAuthorFromLine(result, lineNum);
+        List<String> result = getAuthors(file, lineNum);
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        return result.get(0);
     }
 
-    private BlameResult getBlameResult(File file) throws GitAPIException {
-        String relPath = getRelativePath(file);
+    private List<String> getAuthors(File file) {
+        return getAuthors(file, null);
+    }
 
-        return git.blame().setFilePath(relPath).call();
+    private List<String> getAuthors(File file, Integer lineNum) {
+        List<String> out = new LinkedList<String>();
+        try {
+            ProcessBuilder processBuilder;
+            if (lineNum != null) {
+                processBuilder = new ProcessBuilder(
+                        "git","--no-pager","blame","-wec",
+                        "-L",lineNum+","+lineNum,
+                        getRelativePath(file));
+            } else {
+                processBuilder = new ProcessBuilder(
+                        "git","--no-pager","blame","-wec",
+                        getRelativePath(file));
+            }
+
+            processBuilder.directory(new File(basePath));
+            Process p = processBuilder.start();
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(
+                    p.getInputStream()));
+
+            String line;
+            while((line = reader.readLine()) != null) {
+                String[] parts = line.split("\t");
+                if (parts.length < 2) {
+                    continue;
+                }
+                String author = parts[1].trim().replaceAll("(^\\(<|>$)","");
+                out.add(author);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return out;
     }
 
     private String getRelativePath(File file) {
@@ -78,25 +135,4 @@ public class GitRepository implements VCSRepository {
         return filePath.substring(basePath.length() + 1);
     }
 
-    private String getAuthorFromLine(BlameResult result, int line) {
-        String author = "";
-        try {
-            if (result != null && result.hasSourceData(line)) {
-                PersonIdent sourceAuthor = result.getSourceAuthor(line);
-                author = sourceAuthor.getEmailAddress();
-                if (StringUtils.isEmpty(author)) {
-                    author = sourceAuthor.getName();
-                }
-            }
-        } catch (ArrayIndexOutOfBoundsException ex) {
-            //Ignore
-        }
-
-        if (StringUtils.isEmpty(author)) {
-            //Uncomitted lines - fall back to config user
-            author = currentUser;
-        }
-
-        return author;
-    }
 }

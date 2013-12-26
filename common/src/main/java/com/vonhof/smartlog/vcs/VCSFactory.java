@@ -19,10 +19,14 @@ public class VCSFactory {
         }
 
         for(Class<VCSRepository> vcsRepoType : vcsRepoTypes) {
-            VCSRepository repo = tryRepoType(vcsRepoType, file);
-            if (repo != null) {
-                cached.put(file.getParent(), repo);
-                return repo;
+            try {
+                VCSRepository repo = tryRepoType(vcsRepoType, file);
+                if (repo != null) {
+                    cached.put(file.getParent(), repo);
+                    return repo;
+                }
+            } catch (Throwable ex) {
+                //Ignore
             }
         }
 
@@ -35,7 +39,8 @@ public class VCSFactory {
             repo.init(file);
             return repo;
         } catch (Exception e) {
-            //Ignore
+            System.out.println("VCS tried and failed for " + vcsRepoType + " in " + file.getAbsolutePath());
+            e.printStackTrace();;
         }
 
         return null;

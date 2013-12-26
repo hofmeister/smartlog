@@ -10,6 +10,7 @@ public class Main {
     private static final Logger log = SmartLog.getLogger(Main.class, "demo", "test");
 
     public static final void main(String[] args) throws InterruptedException {
+        SmartLog.getInstance().setDebug(true);
         SmartLog.getInstance().addSubscriber(new JavaLoggingSubscriber());
 
         Lib lib = new Lib();

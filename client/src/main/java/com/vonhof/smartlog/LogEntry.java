@@ -2,6 +2,7 @@ package com.vonhof.smartlog;
 
 
 import java.util.Date;
+import java.util.UnknownFormatConversionException;
 
 public class LogEntry {
     private final Date created = new Date();
@@ -69,6 +70,10 @@ public class LogEntry {
         if (msg == null) {
             return null;
         }
-        return String.format(msg, args);
+        try {
+            return String.format(msg, args);
+        } catch (UnknownFormatConversionException ex) {
+            return msg + " " + args;
+        }
     }
 }

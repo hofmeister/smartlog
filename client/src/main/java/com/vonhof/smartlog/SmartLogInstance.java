@@ -22,10 +22,13 @@ public class SmartLogInstance {
     private Level defaultLevel = Level.DEBUG;
 
     private Map<String,Level> prefixLevels = new ConcurrentHashMap<String, Level>();
-
     private Map<String,Level> tagLevels = new ConcurrentHashMap<String, Level>();
+    private Map<String, String> authorCache = new ConcurrentHashMap<String, String>();
 
     private List<LoggerSubscriber> subscribers = new ArrayList<LoggerSubscriber>();
+
+    private String basePath = "src/main/java"; //Base dir of java classes, defaults to maven structure
+    private boolean debug;
 
     public SmartLogInstance() {
         this(new SmartLogServerStore());
@@ -33,6 +36,22 @@ public class SmartLogInstance {
 
     public SmartLogInstance(LoggerStore store) {
         this.store = store;
+    }
+
+    public boolean isDebug() {
+        return debug;
+    }
+
+    public void setDebug(boolean debug) {
+        this.debug = debug;
+    }
+
+    public String getBasePath() {
+        return basePath;
+    }
+
+    public void setBasePath(String basePath) {
+        this.basePath = basePath;
     }
 
     private StackTraceElement[] getTrace(LocationInfo location) {
@@ -107,21 +126,47 @@ public class SmartLogInstance {
         StackTraceElement stackTraceElement = entry.getTrace()[0];
         int line = stackTraceElement.getLineNumber()-1; //Lines are zero based in author list
 
+        String cacheKey = getAuthorCacheKey(target, line);
+
+        if (authorCache.containsKey(cacheKey)) {
+            return authorCache.get(cacheKey);
+        }
+
         String author = getAuthorFromRegistry(target, line);
         if (author == null) {
-            return getAuthorFromVCS(stackTraceElement.getFileName(), line);
+            author = getAuthorFromVCS(stackTraceElement.getClassName(), stackTraceElement.getLineNumber());
         }
+        if (author == null) {
+            author = "";
+        }
+        authorCache.put(cacheKey, author);
 
         return author;
     }
 
-    private String getAuthorFromVCS(String fileName, int line) {
-        File file = new File(fileName);
+    private String getAuthorCacheKey(Class target, int line ) {
+        return target.toString() + ":" + line;
+    }
+
+    private String getAuthorFromVCS(String className, int line) {
+        String filePath = basePath + "/" + className.replaceAll("\\.","/") + ".java";
+        File file = new File(filePath);
+        if (!file.exists()) {
+            debugMsg("File not found: " + file.getAbsolutePath());
+            return null;
+        }
+
         try {
             return VCSFactory.getRepository(file).resolveAuthor(file,line);
         } catch (Exception e) {
             return null;
         }
+    }
+
+
+    private void debugMsg(String msg) {
+        if (!debug) return;
+        System.out.println(msg);
     }
 
     private String getAuthorFromRegistry(Class target, int line) {
