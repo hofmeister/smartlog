@@ -9,15 +9,31 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * EXPERIMENTAL: Mercurial implementation of the VCSRepository.
+ *
+ * Untested, most likely broken.
+ */
 public class MercurialRepository implements VCSRepository {
     private BaseRepository repo;
     private String defaultUser = null; //Not sure how to get this for mercurial
 
+    /**
+     * Init this repo - should only be called once, by the VCSFactory
+     * @param file
+     * @throws IOException
+     */
     @Override
     public void init(File file) throws IOException {
         repo = Repository.open(file);
     }
 
+    /**
+     * Resolve authors for entire file
+     * @param file
+     * @return
+     * @throws Exception
+     */
     @Override
     public AuthorMap resolveAuthor(File file) throws Exception {
         String relativePath = getRelativePath(file);
@@ -33,11 +49,16 @@ public class MercurialRepository implements VCSRepository {
         return out;
     }
 
-    private String getRelativePath(File file) {
-        String filePath = file.getAbsolutePath();
-        return filePath.substring(repo.getDirectory().getAbsolutePath().length() + 1);
-    }
-
+    /**
+     * Resolve author for a single line in the file
+     *
+     * Calls resolveAuthor(File file) so no performance benefit in calling this instead for mercurial.
+     *
+     * @param file
+     * @param lineNum
+     * @return
+     * @throws Exception
+     */
     @Override
     public String resolveAuthor(File file, int lineNum) throws Exception {
         String[] authors = resolveAuthor(file).getAuthors();
@@ -45,5 +66,15 @@ public class MercurialRepository implements VCSRepository {
             return defaultUser;
         }
         return authors[lineNum];
+    }
+
+    /**
+     * Get relative path of file
+     * @param file
+     * @return
+     */
+    private String getRelativePath(File file) {
+        String filePath = file.getAbsolutePath();
+        return filePath.substring(repo.getDirectory().getAbsolutePath().length() + 1);
     }
 }

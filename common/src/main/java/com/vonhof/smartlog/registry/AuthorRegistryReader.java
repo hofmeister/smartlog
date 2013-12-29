@@ -2,6 +2,11 @@ package com.vonhof.smartlog.registry;
 
 import java.lang.reflect.Field;
 
+/**
+ * Reads written author registries for a particular class.
+ *
+ * The format is described in {@link AuthorRegistryWriter}
+ */
 public class AuthorRegistryReader {
     private final Class target;
     private String[] authorList;

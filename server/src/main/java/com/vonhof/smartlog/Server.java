@@ -13,24 +13,26 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
 
 public class Server {
 
+    public static Webi webi;
+
     public static void main(String[] args) throws Exception {
         BabelShark.register(new JsonLanguage());
 
-        Webi webi = new Webi(8844);
+        webi = new Webi(Config.getServerPort());
 
         webi.addBean(BabelShark.getDefaultInstance());
+        webi.addBean(new LogService());
 
         final Client client = new TransportClient()
-                .addTransportAddress(new InetSocketTransportAddress("localhost", 9301));
+                .addTransportAddress(new InetSocketTransportAddress(Config.getESHost(), Config.getESPort()));
 
         webi.addBean(Client.class, client);
 
-        webi.addBean(new LogService());
+
 
         RESTServiceHandler rest = webi.add("/rest/", new RESTServiceHandler());
 
         rest.expose(new LogResource());
-
 
         webi.add(new ShutdownHandler() {
             @Override

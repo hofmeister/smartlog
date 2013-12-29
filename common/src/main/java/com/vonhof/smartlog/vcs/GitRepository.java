@@ -11,6 +11,9 @@ import java.io.InputStreamReader;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Git implementation of the VCSRepository.
+ */
 public class GitRepository implements VCSRepository {
 
     private Repository repository;
@@ -18,6 +21,11 @@ public class GitRepository implements VCSRepository {
     private String currentUser;
     private String basePath;
 
+    /**
+     * Inits this git repo wrapper. Should only be called once, and only by the VCSFactory
+     * @param file
+     * @throws IOException
+     */
     @Override
     public void init(File file) throws IOException {
         if (repository != null) {
@@ -48,6 +56,12 @@ public class GitRepository implements VCSRepository {
         basePath = git.getRepository().getDirectory().getParentFile().getAbsolutePath();
     }
 
+    /**
+     * Resolve authors for entire file
+     * @param file
+     * @return
+     * @throws Exception
+     */
     @Override
     public AuthorMap resolveAuthor(File file) throws Exception {
         if (!file.exists()) {
@@ -68,7 +82,7 @@ public class GitRepository implements VCSRepository {
     }
 
     /**
-     * Resolve author
+     * Resolve author for a single line
      * @param file
      * @param lineNum 1-based
      * @return
@@ -88,10 +102,23 @@ public class GitRepository implements VCSRepository {
         return result.get(0);
     }
 
+    /**
+     * Get ordered list of authors per line in provided file
+     * @param file
+     * @return
+     */
     private List<String> getAuthors(File file) {
         return getAuthors(file, null);
     }
 
+    /**
+     * Get list of authors
+     *
+     * Uses "git" from commandline (jGit support for blame is broken)
+     * @param file
+     * @param lineNum If set to null then get all lines
+     * @return
+     */
     private List<String> getAuthors(File file, Integer lineNum) {
         List<String> out = new LinkedList<String>();
         try {
@@ -130,6 +157,12 @@ public class GitRepository implements VCSRepository {
         return out;
     }
 
+    /**
+     * Gets the relative path for the file - from the basepath of the git repo.
+     * Needed when running the blame command
+     * @param file
+     * @return
+     */
     private String getRelativePath(File file) {
         String filePath = file.getAbsolutePath();
         return filePath.substring(basePath.length() + 1);

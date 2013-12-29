@@ -55,4 +55,12 @@ public class LogEntryDTO {
     public void setTrace(StackTraceDTO[] trace) {
         this.trace = trace;
     }
+
+    @Override
+    public String toString() {
+        return "LogEntryDTO{" +
+                "author='" + author + '\'' +
+                ", message='" + message + '\'' +
+                '}';
+    }
 }

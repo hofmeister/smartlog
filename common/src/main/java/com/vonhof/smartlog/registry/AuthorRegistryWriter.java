@@ -5,6 +5,14 @@ import org.apache.commons.lang.StringUtils;
 
 import java.util.Arrays;
 
+/**
+ * Writes author registry to disk for a given classname and AuthorMap.
+ *
+ * Currently it creates a public final class which has a single private static property that is an array of authors
+ * (1 per line). It conserves memory by only writing a string name every time it changes, and otherwise writes null's.
+ *
+ * To read these registries see {@link AuthorRegistryReader}
+ */
 public class AuthorRegistryWriter {
     private static final String CLASS_POSTFIX = "__SLAUTHORS";
 

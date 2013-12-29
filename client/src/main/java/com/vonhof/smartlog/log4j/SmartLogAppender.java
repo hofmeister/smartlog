@@ -17,11 +17,30 @@ import java.util.Enumeration;
 public class SmartLogAppender extends AppenderSkeleton implements AppenderAttachable {
 
     private final SmartLogInstance smartLog;
+
     private AppenderAttachableImpl aai = new AppenderAttachableImpl();
+
+    private String applicationId;
 
     public SmartLogAppender() {
         smartLog = new SmartLogInstance();
         smartLog.addSubscriber( new SystemOutSubscriber() );
+    }
+
+    protected SmartLogAppender(SmartLogInstance smartLog) {
+        this.smartLog = smartLog;
+    }
+
+    public SmartLogInstance getSmartLog() {
+        return smartLog;
+    }
+
+    public String getApplicationId() {
+        return applicationId;
+    }
+
+    public void setApplicationId(String applicationId) {
+        this.applicationId = applicationId;
     }
 
     @Override

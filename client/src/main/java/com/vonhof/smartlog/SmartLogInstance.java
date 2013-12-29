@@ -27,7 +27,17 @@ public class SmartLogInstance {
 
     private List<LoggerSubscriber> subscribers = new ArrayList<LoggerSubscriber>();
 
-    private String basePath = "src/main/java"; //Base dir of java classes, defaults to maven structure
+    /**
+     * Base dir of java classes, defaults to maven structure.
+     * Used when real-time resolving authors.
+     */
+    private String basePath = "src/main/java";
+
+    /**
+     * Set the application id to identify which component is outputting the logs.
+     */
+    private String applicationId = "unknown";
+
     private boolean debug;
 
     public SmartLogInstance() {

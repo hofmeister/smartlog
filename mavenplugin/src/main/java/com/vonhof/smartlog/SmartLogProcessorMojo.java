@@ -14,7 +14,6 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.project.MavenProject;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -111,23 +110,18 @@ public class SmartLogProcessorMojo extends AbstractMojo {
             AuthorRegistryWriter classWriter = new AuthorRegistryWriter(className);
             File targetFile = new File(targetDir + "/" + classWriter.getFileName());
 
-            AuthorMap authorMap = null;
+            AuthorMap authorMap;
             try {
                 authorMap = repository.resolveAuthor(file);
+
+                getLog().info("Resolved authors for class: " + className + " in " + (System.currentTimeMillis()-startTime) + "ms");
+
+                FileUtils.write(targetFile, classWriter.buildClassString(authorMap));
+
             } catch (Exception e) {
                 getLog().warn("Could not resolve authors for file: " + file, e);
                 return;
             }
-
-            getLog().info("Resolved authors for class: " + className + " in " + (System.currentTimeMillis()-startTime) + "ms");
-
-            try {
-                FileUtils.write(targetFile, classWriter.buildClassString(authorMap));
-            } catch (IOException e) {
-                getLog().warn("Could not write to file: " + targetFile, e);
-            }
-
-
         }
     }
 }

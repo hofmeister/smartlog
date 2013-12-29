@@ -48,7 +48,7 @@ public class SmartLogServerStore implements LoggerStore {
         httpCon.disconnect();
     }
 
-    private LogEntryDTO toDTO(String author, LogEntry logEntry) {
+    protected LogEntryDTO toDTO(String author, LogEntry logEntry) {
         LogEntryDTO dto = new LogEntryDTO();
         dto.setAuthor(author);
 
